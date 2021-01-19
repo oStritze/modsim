@@ -24,7 +24,7 @@ wayhome <- function(maxiter,
     
     ####### initialize variables
     x <- 0
-    y <- 1
+    y <- 1 * events[1]
     direction <- 90 # (calculate the position with sinus & cosinus) 
     # 90 (North), 0 (East), 180 (West), 270 (South) 
     
@@ -35,9 +35,9 @@ wayhome <- function(maxiter,
     car_2 <- sum(runif(floor(events[1])+1) < car_prob)
     
     ## initialize result matrix
-    res <- matrix(c(events[1], x, y, car_1, car_2, direction, 0), 
+    res <- as.data.frame(matrix(c(events[1], x, y, car_1, car_2, direction, 0), 
                   ncol = 7, 
-                  dimnames=list(NULL, c("time", "x", "y", "car_1", "car_2", "direction", "degree")))
+                  dimnames=list(NULL, c("time", "x", "y", "car_1", "car_2", "direction", "degree"))))
     
     ## assuming the event of car can only occur with t is a natural number
     ## calculate how often the event of car occurs between two events of person moving
@@ -63,7 +63,7 @@ wayhome <- function(maxiter,
     }
     
     for(j in 2:length(events)){
-      if(y <= 7 & !hit_1 & !hit_2 & y >= y_min){
+      if(y <= 7 & !hit_1 & !hit_2 & (y >= y_min | all(res$y < y_min))){
         ## degree change of the current direction
         if(type == "A") {
           degree <- sample(c(-90, 0, 90), 1, prob = c(0.25, 0.5, 0.25))
@@ -73,8 +73,8 @@ wayhome <- function(maxiter,
         
         ## calculate new direction
         new_direction <- (direction + degree)%%360 
-        x <- x + cospi(new_direction/180)
-        y <- y + sinpi(new_direction/180)
+        x <- x + cospi(new_direction/180) * (events[j]-events[j-1])
+        y <- y + sinpi(new_direction/180) * (events[j]-events[j-1])
         
         ## simulate events of car occurring during the event of person moving
         if(disc_time[j-1] != 0){
@@ -105,7 +105,7 @@ wayhome <- function(maxiter,
         break
       }
     }
-    res_list[[i]] <- as.data.frame(res)
+    res_list[[i]] <- res
   }
   return(res_list)
 }
@@ -151,7 +151,7 @@ save_plots <- function(res, iter = 1){
     }      
 }
 
-test <- wayhome(1)
+res <- wayhome(1)
 save_plots(test)
 
 ### save as gif: system()-function or in terminal
